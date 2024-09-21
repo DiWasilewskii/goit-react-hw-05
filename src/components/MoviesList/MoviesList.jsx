@@ -9,6 +9,7 @@ export default function MoviesList({ movies }) {
           <MoviesCard movie={movie} />
         </li>
       ))}
-    </ul>
+    </ul> 
   );
 }
+// <PaymentCard payment={payment} />
