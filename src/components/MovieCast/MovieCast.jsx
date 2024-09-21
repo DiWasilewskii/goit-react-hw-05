@@ -1,70 +1,56 @@
-import { Field, Form, Formik } from "formik";
-import { FiSearch } from "react-icons/fi";
 import { useEffect, useState } from "react";
-import { getMoviesSearch } from "../../api/movi-api.js";
-import MoviesList from "../../components/MoviesList/MoviesList.jsx";
-import { useSearchParams } from "react-router-dom";
-import css from "./MoviesPage.module.css";
-import { toast, Toaster } from "react-hot-toast";
+import { getMoviesReviews } from "../../api/movi-api.js";
+import Loader from "../../components/Loader/Loader.jsx";
+import { useParams } from "react-router-dom";
+import css from "./MovieCast.module.css";
 
-export default function MovePage() {
+export default function MovieCast() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [movies, setMovies] = useState([]);
-  const [movieQuery, setMovieQuery] = useSearchParams();
-  const search = movieQuery.get("query") ?? "";
+  const [moviesCast, setMoviesCast] = useState([]);
+  const { movieId } = useParams();
+
   useEffect(() => {
-    if (search === "") {
+    if (!moviesCast) {
       return;
     }
-
-    async function fetchMoviesSearch() {
+    async function fetchMoviesCast() {
       try {
         setLoading(true);
         setError(false);
-        const res = await getMoviesSearch(search);
-        setMovies(res.results);
+        const res = await getMoviesReviews(movieId, "credits");
+        setMoviesCast(res.cast);
       } catch (error) {
-        toast.error("OPS!!! ");
         setError(true);
+        console.log(error);
       } finally {
         setLoading(false);
       }
     }
+    fetchMoviesCast();
+  }, [movieId]);
 
-    fetchMoviesSearch();
-  }, [search]);
-
-  function onSearch(query) {
-    movieQuery.set("query", query);
-    setMovieQuery(movieQuery);
-  }
-  return (
-    <>
-      <Formik
-        initialValues={{ query: search }}
-        onSubmit={(values, actions) => {
-          onSearch(values.query);
-          actions.resetForm();
-        }}
-      >
-        <Form className={css.form}>
-          <Field
-            type="text"
-            name="query"
-            autoComplete="off"
-            autoFocus
-            placeholder="Search movies"
-            className={css.input}
+  return loading ? (
+    <Loader />
+  ) : moviesCast.length > 0 ? (
+    <ul className={css.castList}>
+      {moviesCast.map(cast => (
+        <li key={cast.id} className={css.castItem}>
+          <img
+            src={`https://image.tmdb.org/t/p/w500${cast.profile_path}`}
+            alt={cast.name}
+            className={css.image}
           />
-
-          <button type="submit" className={css.button}>
-            <FiSearch size="16px" />
-          </button>
-        </Form>
-      </Formik>
-      {error && <Toaster position="top-right" reverseOrder={false} />}
-      <MoviesList movies={movies} />
-    </>
+          <div>
+            <p>Name:</p>
+            <p className={css.text}>{cast.name}</p>
+            <p className={css.text}>Character:</p>
+            <p>{cast.character}</p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p>Not Reviews</p>
   );
 }
